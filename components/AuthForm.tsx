@@ -3,21 +3,24 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { Loader2 } from 'lucide-react'
 import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 import CustomInput from './CustomInput'
 import { Form } from './ui/form'
 import { Button } from './ui/button'
 import { authFormSchema } from '@/lib/utils'
+import { signIn, signUp } from '@/lib/actions/user.actions'
 
 export default function AuthForm({ type }: { type: string }) {
+  const router = useRouter()
+  const formSchema = authFormSchema(type)
+
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-
-  const formSchema = authFormSchema(type)
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -34,9 +37,17 @@ export default function AuthForm({ type }: { type: string }) {
 
     try {
       if (type === 'sign-up') {
+        const newUser = await signUp(data)
+
+        setUser(newUser)
       }
 
       if (type === 'sign-in') {
+        const response = await signIn({
+          email: data.email,
+          password: data.password,
+        })
+        if (response) router.push('/')
       }
     } catch (error) {
       console.log(error)
